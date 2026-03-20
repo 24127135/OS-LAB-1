@@ -1,0 +1,130 @@
+diff --git a/Makefile b/Makefile
+index b262c0a..40c0de7 100644
+--- a/Makefile
++++ b/Makefile
+@@ -145,6 +145,10 @@ UPROGS=\
+ 	$U/_logstress\
+ 	$U/_forphan\
+ 	$U/_dorphan\
++	$U/_xargs\
++	$U/_tree\
++	$U/_trace\
++	$U/_proctest\
+ 
+ fs.img: mkfs/mkfs README $(UPROGS)
+ 	mkfs/mkfs fs.img README $(UPROGS)
+diff --git a/user/tree.c b/user/tree.c
+new file mode 100644
+index 0000000..1940c2e
+--- /dev/null
++++ b/user/tree.c
+@@ -0,0 +1,70 @@
++#include "kernel/types.h"
++#include "kernel/stat.h"
++#include "user/user.h"
++#include "kernel/fs.h"
++
++void tree(char *path, int depth) {
++    int fd;
++    struct stat st;
++    struct dirent de;
++    char buf[512];
++
++    if ((fd = open(path, 0)) < 0) {
++        fprintf(2, "tree: cannot open %s\n", path);
++        return;
++    }
++    if (fstat(fd, &st) < 0) {
++        fprintf(2, "tree: cannot stat %s\n", path);
++        close(fd);
++        return;
++    }
++    if (st.type != T_DIR) {
++        close(fd);
++        return;
++    }
++
++    while (read(fd, &de, sizeof(de)) == sizeof(de)) {
++        if (de.inum == 0) continue;
++        if (strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0)
++            continue;
++
++        for (int i = 0; i < depth; i++)
++            printf("  ");
++
++        memset(buf, 0, sizeof(buf));
++        strcpy(buf, path);
++        buf[strlen(buf)] = '/';
++        strcpy(buf + strlen(buf), de.name);
++
++        struct stat est;
++        int efd = open(buf, 0);
++        if (efd < 0) {
++            fprintf(2, "tree: cannot open %s\n", buf);
++            continue;
++        }
++        if (fstat(efd, &est) < 0) {
++            fprintf(2, "tree: cannot stat %s\n", buf);
++            close(efd);
++            continue;
++        }
++        close(efd);
++
++        if (est.type == T_DIR) {
++            printf("%s/\n", de.name);
++            tree(buf, depth + 1);
++        } else {
++            printf("%s\n", de.name);
++        }
++    }
++    close(fd);
++}
++
++int main(int argc, char *argv[]) {
++    char *path = ".";
++    if (argc > 1)
++        path = argv[1];
++
++    printf("%s/\n", path);
++    tree(path, 1);
++    exit(0);
++}
+diff --git a/user/xargs.c b/user/xargs.c
+new file mode 100644
+index 0000000..e46cd6e
+--- /dev/null
++++ b/user/xargs.c
+@@ -0,0 +1,33 @@
++#include "kernel/types.h"
++#include "kernel/stat.h"
++#include "user/user.h"
++#include "kernel/param.h"
++
++int main(int argc, char *argv[]) {
++    char buf[512];
++    char *args[MAXARG];
++    int n;
++
++    for (int i = 1; i < argc; i++)
++        args[i - 1] = argv[i];
++
++    while (1) {
++        int i = 0;
++        while (1) {
++            n = read(0, &buf[i], 1);
++            if (n == 0) exit(0);
++            if (buf[i] == '\n') break;
++            i++;
++        }
++        buf[i] = 0;
++        args[argc - 1] = buf;
++        args[argc] = 0;
++
++        if (fork() == 0) {
++            exec(args[0], args);
++            fprintf(2, "xargs: exec failed\n");
++            exit(1);
++        }
++        wait(0);
++    }
++}

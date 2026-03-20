@@ -270,6 +270,9 @@ endif
 UEXTRA=
 ifeq ($(LAB),util)
 	UEXTRA += user/xargstest.sh
+	UPROGS += $U/_xargs \
+		$U/_tree \
+		$U/_trace
 endif
 
 
