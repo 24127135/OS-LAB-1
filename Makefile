@@ -272,12 +272,6 @@ ifeq ($(LAB),util)
 	UEXTRA += user/xargstest.sh
 	UPROGS += $U/_xargs \
 		$U/_tree
-	ifneq ($(wildcard user/trace.c),)
-		UPROGS += $U/_trace
-	endif
-	ifneq ($(wildcard user/proctest.c),)
-		UPROGS += $U/_proctest
-	endif
 endif
 
 
