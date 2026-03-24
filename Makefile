@@ -270,7 +270,7 @@ endif
 UEXTRA=
 ifeq ($(LAB),util)
 	UPROGS += $U/_trace \
-		$U/_proctest
+		$U/_procinfo
 endif
 
 
