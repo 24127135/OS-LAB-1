@@ -4,12 +4,12 @@
 int
 main(int argc, char *argv[])
 {
-  if(argc < 3){
-    fprintf(2, "Usage: %s mask command\n", argv[0]);
+  if(argc < 3) {
+    fprintf(2, "usage: %s mask command [args ...]\n", argv[0]);
     exit(1);
   }
 
-  if(trace(atoi(argv[1])) < 0){
+  if(trace(atoi(argv[1])) < 0) {
     fprintf(2, "%s: trace failed\n", argv[0]);
     exit(1);
   }

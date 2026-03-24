@@ -11,7 +11,7 @@ main(void)
     exit(1);
   }
 
-  printf("name=%s pid=%d ppid=%d state=%d sz=%d\n",
-         info.name, info.pid, info.ppid, info.state, (int)info.sz);
+    printf("name=%s pid=%d ppid=%d state=%d sz=%ld\n",
+      info.name, info.pid, info.ppid, info.state, info.sz);
   exit(0);
 }
