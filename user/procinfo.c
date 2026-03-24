@@ -1,6 +1,27 @@
 #include "kernel/types.h"
 #include "user/user.h"
 
+static char *
+state_name(int state)
+{
+  switch(state) {
+  case 0:
+    return "UNUSED";
+  case 1:
+    return "USED";
+  case 2:
+    return "SLEEPING";
+  case 3:
+    return "RUNNABLE";
+  case 4:
+    return "RUNNING";
+  case 5:
+    return "ZOMBIE";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -20,7 +41,7 @@ main(int argc, char *argv[])
 
   printf("Process: %s\n", info.name);
   printf("PID: %d, PPID: %d\n", info.pid, info.ppid);
-  printf("State: %d\n", info.state);
+  printf("State: %s\n", state_name(info.state));
   printf("Memory: %ld bytes\n", info.sz);
   exit(0);
 }

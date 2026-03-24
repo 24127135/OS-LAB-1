@@ -10,7 +10,7 @@ entryname(char *name, const struct dirent *de)
   name[DIRSIZ] = 0;
 }
 
-void
+int
 tree(char *path, int depth)
 {
   int fd;
@@ -20,18 +20,18 @@ tree(char *path, int depth)
 
   if((fd = open(path, 0)) < 0) {
     fprintf(2, "tree: cannot open %s\n", path);
-    return;
+    return -1;
   }
 
   if(fstat(fd, &st) < 0) {
     fprintf(2, "tree: cannot stat %s\n", path);
     close(fd);
-    return;
+    return -1;
   }
 
   if(st.type != T_DIR) {
     close(fd);
-    return;
+    return 0;
   }
 
   while(read(fd, &de, sizeof(de)) == sizeof(de)) {
@@ -88,16 +88,23 @@ tree(char *path, int depth)
   }
 
   close(fd);
+  return 0;
 }
 
 int
 main(int argc, char *argv[])
 {
+  if(argc > 2) {
+    fprintf(2, "usage: tree [directory]\n");
+    exit(1);
+  }
+
   char *path = ".";
   if(argc > 1)
     path = argv[1];
 
   printf("%s/\n", path);
-  tree(path, 1);
+  if(tree(path, 1) < 0)
+    exit(1);
   exit(0);
 }
