@@ -3,6 +3,13 @@
 #include "user/user.h"
 #include "kernel/fs.h"
 
+static void
+entryname(char *name, const struct dirent *de)
+{
+  memmove(name, de->name, DIRSIZ);
+  name[DIRSIZ] = 0;
+}
+
 void
 tree(char *path, int depth)
 {
@@ -28,11 +35,14 @@ tree(char *path, int depth)
   }
 
   while(read(fd, &de, sizeof(de)) == sizeof(de)) {
+    char name[DIRSIZ + 1];
+
     // Skip empty entries
     if(de.inum == 0) continue;
+    entryname(name, &de);
     
     // Skip . and ..
-    if(strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0)
+    if(strcmp(name, ".") == 0 || strcmp(name, "..") == 0)
       continue;
 
     // Print indentation
@@ -41,11 +51,17 @@ tree(char *path, int depth)
 
     // Build full path
     memset(buf, 0, sizeof(buf));
-    strcpy(buf, path);
-    if(buf[strlen(buf) - 1] != '/') {
-      buf[strlen(buf)] = '/';
+    int plen = strlen(path);
+    if(plen + 1 + strlen(name) + 1 > sizeof(buf)) {
+      fprintf(2, "tree: path too long: %s/%s\n", path, name);
+      continue;
     }
-    strcpy(buf + strlen(buf), de.name);
+    strcpy(buf, path);
+    if(plen > 0 && buf[plen - 1] != '/') {
+      buf[plen] = '/';
+      buf[plen + 1] = 0;
+    }
+    strcpy(buf + strlen(buf), name);
 
     // Stat the entry to determine if it's a directory
     struct stat est;
@@ -64,10 +80,10 @@ tree(char *path, int depth)
 
     // Print entry
     if(est.type == T_DIR) {
-      printf("%s/\n", de.name);
+      printf("%s/\n", name);
       tree(buf, depth + 1);
     } else {
-      printf("%s\n", de.name);
+      printf("%s\n", name);
     }
   }
 
